@@ -1,0 +1,81 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<h1 class="text-center my-4">@ViewData["Title"]</h1>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h4>Randevu Sistemine Giriş</h4>
+            </div>
+            <div class="card-body">
+                <form id="account" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email" class="form-control" id="email" placeholder="E-posta" autocomplete="username" />
+                        <label asp-for="Input.Email">E-posta</label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password" type="password" class="form-control" id="password" placeholder="Şifre" autocomplete="current-password" />
+                        <label asp-for="Input.Password">Şifre</label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" asp-for="Input.RememberMe" id="rememberMe" />
+                        <label class="form-check-label" asp-for="Input.RememberMe">
+                            Beni Hatırla
+                        </label>
+                    </div>
+
+                    <div>
+                        <button id="login-submit" type="submit" class="btn btn-primary w-100">Giriş Yap</button>
+                    </div>
+
+                    <div class="text-center mt-2">
+                        <a class="text-decoration-none" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Yeni bir hesap oluştur</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.ExternalLogins?.Count > 0)
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6 text-center">
+            <h5>Farklı bir hizmetle giriş yapın</h5>
+            <hr />
+            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <div class="d-flex justify-content-center gap-2">
+                    @foreach (var provider in Model.ExternalLogins!)
+                    {
+                        <button type="submit" class="btn btn-outline-primary" name="provider" value="@provider.Name">
+                            @provider.DisplayName ile Giriş Yap
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6 text-center">
+            <p>Harici giriş hizmetleri yapılandırılmamış.</p>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

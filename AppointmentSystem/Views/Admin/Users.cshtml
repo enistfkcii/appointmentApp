@@ -1,0 +1,206 @@
+@model List<AppointmentSystem.Models.ApplicationUser>
+
+<div class="container mt-5">
+    <h3 class="text-center">Kullanıcı Yönetimi</h3>
+    <button class="btn btn-secondary mb-3" data-bs-toggle="modal" data-bs-target="#createUserModal">+ Yeni Kullanıcı
+        Ekle</button>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Kullanıcı Adı</th>
+                <th>Email</th>
+                <th>Roller</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.UserName</td>
+                    <td>@user.Email</td>
+                    <td id="roles-@user.Id">
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary role-btn" data-id="@user.Id">Rol Ata</button>
+                        <button class="btn btn-sm btn-danger delete-user-btn" data-id="@user.Id">Sil</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="roleModal" tabindex="-1" aria-labelledby="roleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalLabel">Rol Ata</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="userId" />
+                <label for="roleSelect" class="form-label">Rol Seçin:</label>
+                <select id="roleSelect" class="form-select">
+                    <option value="Admin">Admin</option>
+                    <option value="User">User</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" id="assignRoleBtn" class="btn btn-primary">Rol Ata</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">Yeni Kullanıcı Oluştur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="mb-3">
+                        <label for="newEmail" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="newEmail" name="Email"
+                            placeholder="Kullanıcı email" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Şifre:</label>
+                        <input type="password" class="form-control" id="newPassword" name="Password"
+                            placeholder="Kullanıcı şifresi" required />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" id="saveUserBtn" class="btn btn-primary">Kullanıcı Oluştur</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            $("#saveUserBtn").click(function () {
+                const email = $("#newEmail").val();
+                const password = $("#newPassword").val();
+
+                if (!email || !password) {
+                    alert("Tüm alanları doldurmanız gerekiyor!");
+                    return;
+                }
+
+                $.ajax({
+                    url: "/Admin/CreateUser",
+                    method: "POST",
+                    data: { email, password },
+                    success: function (user) {
+                        addUserToTable(user);
+                        $("#createUserModal").modal("hide");
+                        $("#createUserForm")[0].reset();
+                    },
+                    error: function () {
+                        alert("Kullanıcı oluşturulurken bir hata oluştu.");
+                    }
+                });
+            });
+            function addUserToTable(user) {
+                const tableBody = $("table tbody");
+                const newRow = `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.userName}</td>
+                    <td>${user.email}</td>
+                    <td id="roles-${user.id}">Rolleri Yok</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary role-btn" data-id="${user.id}">Rol Ata</button>
+                        <button class="btn btn-sm btn-danger delete-user-btn" data-id="${user.id}">Sil</button>
+                    </td>
+                </tr>
+            `;
+
+                tableBody.append(newRow);
+            }
+            $("tbody tr").each(function () {
+                const userId = $(this).find(".role-btn").data("id");
+
+                $.ajax({
+                    url: `/Admin/GetUserRoles?userId=${userId}`,
+                    method: "GET",
+                    success: function (roles) {
+                        $(`#roles-${userId}`).text(roles.join(", ") || "Rolleri Yok");
+                    },
+                    error: function () {
+                        $(`#roles-${userId}`).text("Hata");
+                    }
+                });
+            });
+
+            $(".role-btn").click(function () {
+                const userId = $(this).data("id");
+                $("#userId").val(userId);
+
+                $.ajax({
+                    url: `/Admin/GetUserRoles?userId=${userId}`,
+                    method: "GET",
+                    success: function (roles) {
+                        $("#roleSelect").val(roles[0] || "User");
+                        $("#roleModal").modal("show");
+                    },
+                    error: function () {
+                        alert("Roller alınırken bir hata oluştu.");
+                    }
+                });
+            });
+
+          
+            $("#assignRoleBtn").click(function () {
+                const userId = $("#userId").val();
+                const role = $("#roleSelect").val();
+
+                $.ajax({
+                    url: "/Admin/AssignRole",
+                    method: "POST",
+                    data: { userId, role },
+                    success: function () {
+                        alert("Rol başarıyla atandı!");
+                        $("#roleModal").modal("hide");
+                        location.reload();
+                    },
+                    error: function () {
+                        alert("Rol atanırken bir hata oluştu.");
+                    }
+                });
+            });
+
+            $(".delete-user-btn").click(function () {
+                const userId = $(this).data("id");
+
+                if (confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")) {
+                    $.ajax({
+                        url: "/Admin/DeleteUser",
+                        method: "POST",
+                        data: { userId },
+                        success: function () {
+                            alert("Kullanıcı başarıyla silindi!");
+                            location.reload();
+                        },
+                        error: function () {
+                            alert("Kullanıcı silinirken bir hata oluştu.");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

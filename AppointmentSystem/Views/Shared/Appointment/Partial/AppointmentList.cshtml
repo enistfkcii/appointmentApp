@@ -1,0 +1,35 @@
+@model List<AppointmentSystem.Models.Appointment>
+
+@foreach (var appointment in Model)
+{
+    <tr id="appointment-@appointment.Id">
+    <td>@appointment.Id</td>
+    <td>@appointment.Name</td>
+    <td>@appointment.Surname</td>
+    <td>@appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm")</td>
+    <td>@appointment.Description</td>
+    <td>@(appointment.Service?.Name ?? "-")</td>
+    <td>
+        @if (appointment.Status == "Beklemede")
+            {
+                <span class="badge bg-warning text-dark">@appointment.Status</span>
+            }
+            else if (appointment.Status == "Onaylandı")
+            {
+                <span class="badge bg-success">@appointment.Status</span>
+            }
+            else if (appointment.Status == "İptal Edildi")
+            {
+                <span class="badge bg-danger">@appointment.Status</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Bilinmiyor</span>
+            }
+    </td>
+        <td>
+            <button class="btn btn-sm btn-primary edit-btn" data-id="@appointment.Id">Düzenle</button>
+            <button class="btn btn-sm btn-danger delete-btn" data-id="@appointment.Id">Sil</button>
+        </td>
+    </tr>
+}

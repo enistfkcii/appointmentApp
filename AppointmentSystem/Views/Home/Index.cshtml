@@ -1,0 +1,312 @@
+﻿@model List<AppointmentSystem.Models.Appointment>;
+@{
+    ViewData["Title"] = "Randevu Ekle";
+}
+
+<div class="text-center">
+    <h3>Randevu Oluştur</h3>
+</div>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header text-center">
+            <p>Hoş Geldiniz, <strong>@User.Identity.Name</strong></p>
+        </div>
+        <div class="card-body">
+            <form id="appointmentForm" class="container mt-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Ad:</label>
+                        <input type="text" class="form-control" id="name" name="Name" placeholder="Adınızı girin"
+                            required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="surname" class="form-label">Soyad:</label>
+                        <input type="text" class="form-control" id="surname" name="Surname"
+                            placeholder="Soyadınızı girin" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="service" class="form-label">Servis:</label>
+                        <select id="service" name="ServiceId" class="form-select" required>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="appointmentDate" class="form-label">Randevu Tarihi:</label>
+                        <input type="datetime-local" class="form-control" id="appointmentDate" name="AppointmentDate"
+                            required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Durum:</label>
+                        <select id="status" name="Status" class="form-select" required disabled>
+                            <option value="Beklemede">Beklemede</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="description" class="form-label">Açıklama:</label>
+                        <textarea class="form-control" id="description" name="Description" rows="3"
+                            placeholder="Randevu hakkında açıklama yazın"></textarea>
+                    </div>
+
+                    <div class="col-12 text-center">
+                        <button type="submit" id="createAppointment" class="btn btn-success w-100">Randevu
+                            Oluştur</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <h3 class="text-center">Randevu Listesi</h3>
+        <table class="table table-hover mt-4">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ad</th>
+                    <th>Soyad</th>
+                    <th>Tarih</th>
+                    <th>Açıklama</th>
+                    <th>Servis</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="appointmentList">
+                @Html.Partial("Appointment/Partial/AppointmentList", Model)
+            </tbody>
+        </table>
+    </div>
+</div>
+}
+else
+{
+    <div class="card">
+    <div class="card-header">
+        Randevu Sistemi
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">Sisteme Giriş Yapın</h5>
+        <p class="card-text">Randevu oluşturabilmeniz için öncelikle Giriş yapmanız gerekmektedir</p>
+        <a href="/Identity/Account/Login" class="btn btn-primary">Giriş</a>
+    </div>
+</div>
+}
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Randevu Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">Ad:</label>
+                        <input type="text" class="form-control" id="editName" name="Name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSurname" class="form-label">Soyad:</label>
+                        <input type="text" class="form-control" id="editSurname" name="Surname" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAppointmentDate" class="form-label">Randevu Tarihi:</label>
+                        <input type="datetime-local" class="form-control" id="editAppointmentDate"
+                            name="AppointmentDate" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Açıklama:</label>
+                        <textarea class="form-control" id="editDescription" name="Description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="service" class="form-label">Servis:</label>
+                        <select id="editService" name="ServiceId" class="form-select" required>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStatus" class="form-label">Durum:</label>
+                        <select id="editStatus" name="Status" class="form-select" required disabled>
+                            <option value="Beklemede">Beklemede</option>
+                            <option value="Onaylandı">Onaylandı</option>
+                            <option value="İptal Edildi">İptal Edildi</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" id="saveEdit" class="btn btn-primary">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            loadServices();
+
+            $("#appointmentList").on("click", ".edit-btn", function () {
+                var id = $(this).data("id");
+                $.ajax({
+                    url: "/Appointment/Edit/" + id,
+                    method: "GET",
+                    success: function (data) {
+                        $("#editId").val(data.id);
+                        $("#editName").val(data.name);
+                        $("#editSurname").val(data.surname);
+                        $("#editAppointmentDate").val(new Date(data.appointmentDate).toISOString().slice(0, 16));
+                        $("#editDescription").val(data.description);
+                        $("#editStatus").val(data.status);
+                        $("#editService").val(data.serviceId);
+                        debugger;
+                        $("#editModal").modal("show");
+                    },
+                    error: function () {
+                        alert("Randevu bilgisi alınırken bir hata oluştu.");
+                    }
+                });
+            });
+            $("#saveEdit").on("click", function () {
+                var formData = $("#editForm").serialize();
+                $.ajax({
+                    url: "/Appointment/Edit",
+                    method: "POST",
+                    data: formData,
+                    success: function (response) {
+                        refreshAppointmentList();
+                        $("#editModal").modal("hide");
+                    },
+                    error: function () {
+                        alert("Güncelleme sırasında bir hata oluştu.");
+                    }
+                });
+            });
+            $("#appointmentList").on("click", ".delete-btn", function () {
+                var id = $(this).data("id");
+
+                if (confirm("Bu randevuyu silmek istediğinizden emin misiniz?")) {
+                    $.ajax({
+                        url: "/Appointment/Delete",
+                        method: "POST",
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.success) {
+                                refreshAppointmentList();
+                            } else {
+                                alert("Randevu silinemedi. Lütfen tekrar deneyin.");
+                            }
+                        },
+                        error: function () {
+                            alert("Silme işlemi sırasında bir hata oluştu.");
+                        }
+                    });
+                }
+            });
+        });
+
+        // Listeyi yenileme
+        function refreshAppointmentList() {
+            $.ajax({
+                url: "/Appointment/GetAppointments",
+                method: "GET",
+                success: function (html) {
+                    $("#appointmentList").html(html);
+                },
+                error: function () {
+                    alert("Randevu listesi yenilenirken bir hata oluştu.");
+                }
+            });
+        }
+
+
+        $(document).on('click', '#createAppointment', function (e) {
+            e.preventDefault();
+
+            let name = $('#name').val();
+            let surname = $('#surname').val();
+            let description = $('#description').val();
+            let appointmentDate = $('#appointmentDate').val();
+            let status = $('#status').val();
+            let serviceId = $("#service").val();
+
+            if (!name || !surname || !appointmentDate || !status) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Eksik Bilgi!',
+                    text: 'Lütfen tüm alanları doldurun.',
+                });
+                return;
+            }
+
+            $.ajax({
+                url: '/Appointment/Create',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    Name: name,
+                    Surname: surname,
+                    Description: description,
+                    AppointmentDate: appointmentDate,
+                    Status: status,
+                    ServiceId: serviceId
+                }),
+                success: function (response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı!',
+                        text: 'Başarıyla Eklendi',
+                    }).then(() => {
+                        $('#appointmentForm')[0].reset();
+                        refreshAppointmentList();
+                    });
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata!',
+                        text: 'Randevu eklenirken bir hata oluştu.',
+                    });
+                }
+            });
+        });
+
+        function loadServices() {
+            $.ajax({
+                url: "/Appointment/GetServices",
+                method: "GET",
+                success: function (services) {
+                    const serviceDropdown = $("#service");
+                    serviceDropdown.empty();
+                    serviceDropdown.append('<option value="" disabled selected>Servis Seçiniz</option>');
+                    services.forEach(service => {
+                        serviceDropdown.append(`<option value="${service.id}">${service.name}</option>`);
+                    });
+
+                    
+                    const editServiceDropdown = $("#editService");
+                    editServiceDropdown.empty();
+                    editServiceDropdown.append('<option value="" disabled selected>Servis Seçiniz</option>');
+                    services.forEach(service => {
+                        editServiceDropdown.append(`<option value="${service.id}">${service.name}</option>`);
+                    });
+                },
+                error: function () {
+                    alert("Servisler yüklenirken bir hata oluştu.");
+                }
+            });
+        }
+    </script>
+}
